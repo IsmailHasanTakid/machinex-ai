@@ -1,0 +1,77 @@
+
+# ==============================
+# PYTHON
+# ==============================
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Python build / packaging
+build/
+dist/
+.eggs/
+*.egg-info/
+wheels/
+pip-wheel-metadata/
+
+# Python testing / cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# ==============================
+# FASTAPI / BACKEND
+# ==============================
+*.log
+logs/
+
+# ==============================
+# NODE.JS / REACT / VITE
+# ==============================
+node_modules/
+dist/
+build/
+.npm/
+.eslintcache
+.vite/
+
+# ==============================
+# ENVIRONMENT VARIABLES
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# IDE / EDITORS
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# ==============================
+# OPERATING SYSTEM
+# ==============================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==============================
+# TEMPORARY FILES
+# ==============================
+*.tmp
+*.temp
+*.bak
+*.old

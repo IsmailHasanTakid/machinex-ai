@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f1f5f9;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode */
+.dark body {
+  background: #020617;
+  color: #e2e8f0;
+}
+
+/* Dark Mode - Cards */
+.dark .bg-white {
+  background-color: #0f172a;
+}
+
+/* Dark Mode - Light Backgrounds */
+.dark .bg-slate-50 {
+  background-color: #1e293b;
+}
+
+.dark .bg-slate-100 {
+  background-color: #0f172a;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155;
+}
+
+/* Dark Mode - Text */
+.dark .text-slate-800 {
+  color: #f1f5f9;
+}
+
+.dark .text-slate-700 {
+  color: #e2e8f0;
+}
+
+.dark .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .text-slate-500 {
+  color: #94a3b8;
+}
+
+.dark .text-slate-400 {
+  color: #94a3b8;
+}
+
+/* Dark Mode - Borders */
+.dark .border-slate-300 {
+  border-color: #475569;
+}
+
+.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+/* Dark Mode - Inputs */
+.dark input,
+.dark select {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+.dark input::placeholder {
+  color: #94a3b8;
+}
+
+/* Smooth Transitions */
+.bg-white,
+.bg-slate-50,
+.bg-slate-100,
+.text-slate-800,
+.text-slate-700,
+.text-slate-600 {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  #root {
+    background: white !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
