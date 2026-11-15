@@ -44,9 +44,9 @@ export default function Layout() {
     return (
         <div className="min-h-screen flex bg-slate-50 dark:bg-[#080f1e] transition-colors">
 
-            {/* Desktop Sidebar */}
+            {/* Desktop Sidebar (gap on left & top only) */}
 
-            <aside className="hidden md:flex fixed top-0 left-0 h-screen w-[260px] shrink-0 flex-col bg-[#0b1425] text-white border-r border-white/5 z-40 overflow-y-auto">
+            <aside className="hidden md:flex fixed top-4 left-20 h-[calc(100vh-1rem)] w-[260px] shrink-0 flex-col bg-[#0b1425] text-white border border-white/10 border-b-0 shadow-2xl shadow-black/30 z-40 overflow-y-auto">
 
                 {/* Brand */}
 
@@ -136,54 +136,57 @@ export default function Layout() {
                 </div>
             </aside>
 
-            {/* Main Area */}
+            {/* Main Area (margin = 32px left gap + 260px sidebar + 16px spacing) */}
 
-            <div className="flex-1 min-w-0 flex flex-col md:ml-[260px]">
+            <div className="flex-1 min-w-0 flex flex-col md:ml-[308px]">
 
                 {/* Top Header */}
 
-                <header className="sticky print:hidden top-0 z-30 h-[76px] flex items-center justify-between px-4 md:px-8 bg-white/90 dark:bg-[#0b1425]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
+                <header className="sticky print:hidden top-0 z-30 h-[76px] bg-white/90 dark:bg-[#0b1425]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
+                    <div className="h-full w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
 
-                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3">
 
-                        <button
-                            onClick={() => setMobileOpen(!mobileOpen)}
-                            className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                            aria-label="Toggle navigation"
-                        >
-                            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-                        </button>
+                            <button
+                                onClick={() => setMobileOpen(!mobileOpen)}
+                                className="md:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                aria-label="Toggle navigation"
+                            >
+                                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+                            </button>
 
-                        <div>
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                <span>Workspace</span>
-                                <ChevronRight size={13} />
-                                <span className="text-sky-500 font-medium">
+                            <div>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <span>Workspace</span>
+                                    <ChevronRight size={13} />
+                                    <span className="text-sky-500 font-medium">
+                                        {currentPage}
+                                    </span>
+                                </div>
+
+                                <h2 className="text-sm font-bold text-slate-800 dark:text-white mt-1">
                                     {currentPage}
-                                </span>
+                                </h2>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+
+                            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                Predictive Maintenance
                             </div>
 
-                            <h2 className="text-sm font-bold text-slate-800 dark:text-white mt-1">
-                                {currentPage}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-
-                        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            Predictive Maintenance
+                            <button
+                                onClick={() => setDark(!dark)}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:border-sky-400 transition"
+                                aria-label="Toggle theme"
+                                title={dark ? "Light Mode" : "Dark Mode"}
+                            >
+                                {dark ? <Sun size={19} /> : <Moon size={19} />}
+                            </button>
                         </div>
 
-                        <button
-                            onClick={() => setDark(!dark)}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:border-sky-400 transition"
-                            aria-label="Toggle theme"
-                            title={dark ? "Light Mode" : "Dark Mode"}
-                        >
-                            {dark ? <Sun size={19} /> : <Moon size={19} />}
-                        </button>
                     </div>
                 </header>
 
@@ -212,8 +215,8 @@ export default function Layout() {
 
                 {/* Page Content */}
 
-                <main className="flex-1 min-w-0 px-6 py-6 md:px-10 md:py-8 xl:px-14">
-                    <div className="w-full max-w-7xl mx-auto">
+                <main className="flex-1 min-w-0 py-6 md:py-8">
+                    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 print:max-w-none print:px-0">
                         <Outlet />
                     </div>
                 </main>

@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
@@ -16,12 +16,19 @@ import {
     Droplets,
     ShieldCheck,
 } from "lucide-react";
-import html2pdf from "html2pdf.js";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 
 const ReportDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
+    // Toast state (hooks must stay above any early return)
+    const [toast, setToast] = useState(null);
+
+    const showToast = (type, message) => {
+        setToast({ type, message });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     // Get all saved scans
     const scans = JSON.parse(localStorage.getItem("scans") || "[]");
@@ -135,136 +142,139 @@ const ReportDetails = () => {
         : "Unknown";
 
     // Export report as PDF
-
     const handleExportPDF = async () => {
         const reportElement = document.getElementById("report-content");
 
         if (!reportElement) {
-            alert("Report content not found!");
-            return;
-        }
-
-        if (!window.showSaveFilePicker) {
-            alert("Please use Google Chrome or Microsoft Edge.");
+            showToast("error", "Report content not found!");
             return;
         }
 
         const filename = `MachineGuard-Report-${scan.id || "report"}.pdf`;
 
-        try {
-            // Open Save As dialog
-            const fileHandle = await window.showSaveFilePicker({
-                suggestedName: filename,
-                types: [
-                    {
-                        description: "PDF Document",
-                        accept: {
-                            "application/pdf": [".pdf"],
-                        },
-                    },
-                ],
-            });
+        // IMPORTANT: showSaveFilePicker must be called FIRST, directly inside
+        // the click handler (before any other await), otherwise the browser blocks it.
+        let fileHandle = null;
 
-            // Convert report into canvas
+        if (window.showSaveFilePicker) {
+            try {
+                fileHandle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [
+                        {
+                            description: "PDF Document",
+                            accept: { "application/pdf": [".pdf"] },
+                        },
+                    ],
+                });
+            } catch (error) {
+                // User closed the Save dialog
+                if (error.name === "AbortError") return;
+
+                // Any other problem -> fall back to normal download
+                console.warn("Save picker unavailable, using normal download:", error);
+                fileHandle = null;
+            }
+        }
+
+        try {
+            // 1) Convert report to canvas (html2canvas-pro supports oklch colors)
             const canvas = await html2canvas(reportElement, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: "#ffffff",
-
                 onclone: (clonedDocument) => {
-                    // Remove unsupported oklch colors
-                    const elements = clonedDocument.querySelectorAll("*");
-
-                    elements.forEach((element) => {
-                        const computedStyle =
-                            window.getComputedStyle(element);
-
-                        const properties = [
-                            "color",
-                            "backgroundColor",
-                            "borderTopColor",
-                            "borderRightColor",
-                            "borderBottomColor",
-                            "borderLeftColor",
-                        ];
-
-                        properties.forEach((property) => {
-                            const value = computedStyle[property];
-
-                            if (value?.includes("oklch")) {
-                                element.style[property] =
-                                    property === "color"
-                                        ? "#111827"
-                                        : "#ffffff";
-                            }
-                        });
-                    });
+                    // Always export in light theme, even if dark mode is on
+                    clonedDocument.documentElement.classList.remove("dark");
                 },
             });
 
-            // Create PDF
+            // 2) Create A4 PDF, split canvas into pages
             const { jsPDF } = await import("jspdf");
 
             const pdf = new jsPDF("p", "mm", "a4");
 
-            const imageData = canvas.toDataURL("image/jpeg", 0.98);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10;
 
-            const pageWidth = 190;
-            const pageHeight = 277;
+            const contentWidth = pageWidth - margin * 2;
+            const contentHeight = pageHeight - margin * 2;
 
-            const imageHeight =
-                (canvas.height * pageWidth) / canvas.width;
+            const pxPerMm = canvas.width / contentWidth;
+            const pageHeightPx = Math.floor(contentHeight * pxPerMm);
 
-            let heightLeft = imageHeight;
-            let position = 10;
+            let renderedPx = 0;
+            let pageIndex = 0;
 
-            pdf.addImage(
-                imageData,
-                "JPEG",
-                10,
-                position,
-                pageWidth,
-                imageHeight
-            );
+            while (renderedPx < canvas.height) {
+                const sliceHeight = Math.min(
+                    pageHeightPx,
+                    canvas.height - renderedPx
+                );
 
-            heightLeft -= pageHeight;
+                const pageCanvas = document.createElement("canvas");
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = sliceHeight;
 
-            while (heightLeft > 0) {
-                position = heightLeft - imageHeight;
+                const ctx = pageCanvas.getContext("2d");
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+                ctx.drawImage(
+                    canvas,
+                    0,
+                    renderedPx,
+                    canvas.width,
+                    sliceHeight,
+                    0,
+                    0,
+                    canvas.width,
+                    sliceHeight
+                );
 
-                pdf.addPage();
+                const imageData = pageCanvas.toDataURL("image/jpeg", 0.95);
+
+                if (pageIndex > 0) pdf.addPage();
 
                 pdf.addImage(
                     imageData,
                     "JPEG",
-                    10,
-                    position,
-                    pageWidth,
-                    imageHeight
+                    margin,
+                    margin,
+                    contentWidth,
+                    sliceHeight / pxPerMm
                 );
 
-                heightLeft -= pageHeight;
+                renderedPx += sliceHeight;
+                pageIndex++;
             }
 
-            // Save PDF to selected folder
             const pdfBlob = pdf.output("blob");
 
-            const writable = await fileHandle.createWritable();
+            // 3) Save
+            if (fileHandle) {
+                // Saved to the folder the user selected
+                const writable = await fileHandle.createWritable();
+                await writable.write(pdfBlob);
+                await writable.close();
+            } else {
+                // Fallback: normal browser download
+                const url = URL.createObjectURL(pdfBlob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            }
 
-            await writable.write(pdfBlob);
-            await writable.close();
-
-            console.log("PDF saved successfully!");
-
+            showToast("success", "PDF downloaded successfully!");
         } catch (error) {
-            if (error.name === "AbortError") return;
-
             console.error("PDF Export Error:", error);
-
-            alert(`Could not save PDF: ${error.message}`);
+            showToast("error", `Could not save PDF: ${error.message}`);
         }
     };
-
 
     return (
         <div id="report-content" className="space-y-6">
@@ -638,6 +648,25 @@ const ReportDetails = () => {
                     Report generated on {reportDate}
                 </p>
             </div>
+
+            {/* Toast */}
+            {toast && (
+                <div
+                    data-html2canvas-ignore="true"
+                    className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border text-sm font-medium print:hidden ${toast.type === "success"
+                        ? "bg-emerald-50 dark:bg-[#0b2a1f] border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-red-50 dark:bg-[#2a0b0b] border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400"
+                        }`}
+                >
+                    {toast.type === "success" ? (
+                        <CheckCircle size={20} />
+                    ) : (
+                        <AlertTriangle size={20} />
+                    )}
+
+                    <span>{toast.message}</span>
+                </div>
+            )}
 
         </div>
     );
